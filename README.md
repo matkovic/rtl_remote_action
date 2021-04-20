@@ -9,7 +9,7 @@ The result in my case is to use wireless bell ring button to take a photo on Ras
 Equipment used:
 * Raspberry Pi 4
 * Rapsberry Pi HQ Camera module
-* RTL-SDR
+* RTL-SDR with antenna
 * "dumb" wireless bell ring knob (433 MHz)
 
 Software used:
@@ -22,6 +22,15 @@ sudo apt install -y mosquitto mosquitto-clients
 sudo systemctl enable mosquitto.service
 ```
 
+Setup
+
+
+![Setup](./imgs/raspic.jpg "Setup")
+![Bell button](./imgs/bell_btncr.jpg "Bell button")
+
+
+
+
 ## Research
 
 With cheap RTL-SDR dongle you can recieve radio frequency signals from around 24 MHz - 1.7 GHz and since most of cheap wireless devices use lower ISM bands, we can recieve and decode signals around 433 MHz.
@@ -29,7 +38,7 @@ Check your country's regulatives for decoding, recieveing, transmitting RF signa
 
 The first thing is to determine the frequency on the wireless knob. I used SDR# and figured out that signal is beeing transmitted on 433.92 MHz when clicking on my wireless button.
 
-img
+![SDR# capture](./imgs/sdrsharp_capture.jpg "SDR# capture")
 
 Next thing - decoding the signal or determining that the signal is coming from the exact same button, I am clicking on.
 Here I was messing with GnuRadio but later discovered that this functionality is already in rtl_433 and used this one for decoding signals.
@@ -41,6 +50,9 @@ rtl_433 -f 433920000 -A
 ```
 This is neat solution and gives us most of information about the decoded signal (modulation, gaps, resets, timings, periods, bits) which we use in the next step.
 
+![triq](./imgs/triq_decode.jpg "Triq decode")
+
+
 Finally - trigger some action, when the decoded signal is recieved from the button.
 
 This command starts a listener on the specified frequency for our signal tags and outputs it to the MQTT service:
@@ -49,6 +61,6 @@ rtl_433 -F json -M utc -f 433920000 -R 0 -X "name=bell,modulation=OOK_PWM,s=208,
 ```
 
 Python script listens on this MQTT and takes a photo, when signal recieved:
-``
+```
 python src/mqtt_remote_action.py
-``
+```
